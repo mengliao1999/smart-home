@@ -1,0 +1,80 @@
+【1】编写蜂鸣器的驱动程序。
+
+	编写蜂鸣器对应的应用程序，
+	蜂鸣器模拟报警的声音
+
+	1. 分析电路图 
+	2. 分析芯片手册
+		参考图：蜂鸣器.png
+	
+	3. 编写驱动程序
+
+	4. 编写应用程序，测试驱动程序
+
+【2】 自动创建设备文件
+1. struct class * class_create(owner, name)
+
+	函数功能： 在/sys/class目录下创建name目录
+	函数参数：
+		owner：THIS_MODULE
+		name：目录的名字
+	返回值： 
+		成功：返回struct class结构体类型指针
+		失败：返回错误码的指针
+
+2. void class_destroy(struct class *cls)
+
+	函数功能：销毁class
+	函数参数： 
+		cls ： struct class结构体指针类型变量
+
+	返回值： 无
+
+
+3. struct device *device_create(struct class *class, struct device *parent,
+			     dev_t devt, void *drvdata, const char *fmt, ...)
+
+	函数功能：创建设备文件
+	函数参数： 
+		class ： struct class结构体指针 
+		parent ： NULL 
+		devt ：设备号     主设备号+次设备号
+					MKDEV(ma,mi);
+		drvdata: NULL 
+		fmt : 设备文件的名称
+		... : 
+	返回值： 
+		成功：返回struct device结构体类型指针
+		失败：返回错误码的指针
+4. void device_destroy(struct class *class, dev_t devt)
+	
+	函数功能：销毁设备文件
+	函数参数： 
+		class ： struct class结构体指针 
+		devt ：设备号     主设备号+次设备号
+					MKDEV(ma,mi);
+	返回值：无
+
+
+
+5. IS_ERR(addr) : 如果是错误码的指针，返回真
+	
+	PTR_ERR() : 将错误码指针转换为错误码
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

@@ -1,0 +1,400 @@
+/********************
+*	linux驱动开发   *
+*********************/
+
+【1】什么是驱动？
+	通过一段程序代码让硬件可以工作，这样的程序就叫做驱动程序。
+	
+	无操作系统的嵌入式开发：
+		单片机的开发：
+		51驱动的开发
+		stm32驱动的开发(ARM内核，cortex-m)
+		MSP430驱动开发
+		
+		入门门槛比较低：未来发展空间比较小
+		C语言，硬件基础，数据结构。
+		5000-15000
+		
+	有操作系统的嵌入式开发：
+		linux驱动开发：操作系统使用linux系统
+		高端处理器(ARM内核，cortex-A) 
+				Android---》linux
+				IOS	   ---》unix
+				鸿蒙OS ---》linux
+		高通 
+			骁龙855
+			骁龙865
+		
+		海思
+			麒麟980
+			麒麟990
+		
+		入门门槛比较高，未来发展空间更好。
+		硬件基础， c语言，数据结构，应用层开发，
+		linux驱动的开发。
+		
+		7000-30000
+		
+		嵌入式应用层开发
+		嵌入式底层驱动开发
+		
+	
+	嵌入式开发--》智能硬件
+	
+	linux驱动？
+	基于linux内核的框架事项的实现的一段代码，
+	这样的代码叫做linux驱动。
+
+【2】linux系统的组成
+
+APP		应用程序调用驱动程序
+
+——————————————————————————————————————
+
+Linux	led灯	LCD屏   摄像头		基于linux内核框架
+Kernel	驱动  	驱动	驱动       	实现的驱动代码
+
+——————————————————————————————————————
+
+HAL      LED    LCD    Camera
+
+
+linux内核的五大模块
+	内存管理：内存的申请和释放
+	文件管理：进行文件的管理
+	网络管理：网络的协议栈，实现数据的收发
+	设备管理：
+		字符设备驱动：led camera lcd 指纹
+		块设备驱动：flash(硬盘)
+		网络设备驱动：网卡
+	进程管理：进程的创建，管理，调度，销毁
+
+
+【3】linux驱动开发采用模块化的方式进行linux驱动的开发
+	需要使用驱动时将驱动加载到linux内核中，
+	不需要使用驱动时将驱动从linux内核中卸载掉。
+	1. 模块化的优点
+		开发效率高，易调试。
+	2. 模块化的特点 
+		可以单独编译，基于linux内核 
+		不可以单独执行，依赖于linux内核
+			只能加载到内核或者从内核中卸载
+		不可以自动的执行，需要应用程序调用驱动程序
+	4. 模块化驱动程序的三要素
+		1》入口函数
+			申请资源，初始化硬件
+			
+			驱动程序加载到linux内核中是调用入口函数
+			
+		2》出口函数
+			释放资源
+			
+			从linux内核中卸载驱动程序是调用出口函数
+			
+		3》许可证
+			遵循的开源协议
+			linux内核是开源
+
+	5. 编写驱动程序  vi module_demo.c 
+		// 头文件 
+		#include <linux/init.h>
+		#include <linux/module.h>
+
+		// 入口函数  __init:给编译器使用
+		static int __init demo_init(void) 
+		{ // 申请资源
+
+			return 0;
+		}
+		// 告诉内核驱动程序的入口函数是demo_init
+		module_init(demo_init);
+
+		// 出口函数  __exit:给编译器使用
+		static void __exit demo_exit(void) 
+		{ // 释放资源
+
+		}
+		// 告诉内核驱动程序的出口函数是demo_exit                                  
+		module_exit(demo_exit);
+
+		//许可证  遵循GPL的开源协议
+		MODULE_LICENSE("GPL");
+		
+	6. 编译驱动的代码
+		vi Makefile  添加一下内容 ：
+		
+		# ubuntu系统对应的linux内核的目录
+		KERNEL_DIR:=/lib/modules/$(shell uname -r)/build 
+		# 当前目录 
+		CURRENT_DIR:=$(shell pwd) 
+
+		all:
+			@# 模块化编译驱动代码
+			make -C $(KERNEL_DIR) M=$(CURRENT_DIR) modules 
+			@ # 前边必须加一个tab键，不能是空格
+		clean:
+			@# 清除中间文件
+			make -C $(KERNEL_DIR) M=$(CURRENT_DIR) clean 
+
+		obj-m += module_demo.o
+
+		编译的命令：
+			make   或者  make all 
+		删除中间文件的命令：
+			make clean 
+			
+		编译完之后得到****.ko
+		****.ko文件就是对应的驱动的可执行程序程序
+
+
+		练习时间：30分钟
+
+【3】打印函数：printk
+	用法基本上跟printf一致
+
+	printk(打印级别 "格式化控制串", 地址表);
+	
+	打印级别：可以省略
+	#define KERN_EMERG	"<0>"	/* system is unusable			*/
+	#define KERN_ALERT	"<1>"	/* action must be taken immediately	*/
+	#define KERN_CRIT	"<2>"	/* critical conditions			*/
+	#define KERN_ERR	"<3>"	/* error conditions			*/
+	#define KERN_WARNING	"<4>"	/* warning conditions			*/
+	#define KERN_NOTICE	"<5>"	/* normal but significant condition	*/
+	#define KERN_INFO	"<6>"	/* informational			*/
+	#define KERN_DEBUG	"<7>"	/* debug-level messages			*/
+
+	编号越小打印级别越高
+	0                       7
+	高						低			
+
+	linux内核提供的几个宏：
+	__FILE__  : 文件名宏 
+	__func__/__FUNCTION__  : 函数名宏
+	__LINE__  : 行号宏
+
+	1. 修改module_demo.c 
+		在入口函数和出口函数中添加打印的函数。
+		printk(KERN_ERR "%s-%s:%d\n",__FILE__, __func__, __LINE__);
+
+	2. 重新编译
+		make
+	
+	3. 加载驱动程序
+		sudo insmod ***.ko    加载驱动程序到内核中的命令
+		
+		加载驱动程序调用入口函数
+		
+	4. 卸载驱动程序
+		sudo rmmod  驱动的名字   从linux内核中卸载驱动命令
+		卸载驱动程序调用出口函数
+		
+	5. 查看驱动
+		sudo lsmod   查看linux内核加载的驱动程序
+
+	6. 由于ubuntu的终端将内核的打印信息全部给屏蔽掉了
+		可以借助dmesg命令查看内核的打印信息
+		
+		dmesg : 查看内核的打印信息
+		dmesg -C  ： 清除之前的打印信息不回显
+		dmesg -c  ： 先回显打印信息，在清除之前的打印信息
+
+
+fopen fread fwrite fclose  标准I/O
+
+【4】字符设备驱动框架
+
+应用层		  led闪烁代码(文件读写操作)
+			  open  read  write  close    文件I/O
+				  |
+----------------------------------
+/dev/设备文件                        ls  /dev
+----------------------------------
+				设备号：32bit 
+							高12位：主设备号  指一类设备
+							低20位：次设备号  指一类设备的第几个设备
+				  | 接口
+Kernel层	  led灯驱动           linux内核中一切接文件
+				  |
+				  struct file_operations {
+					// 函数指针类型变量   指向函数
+					ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);
+					ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+					int (*open) (struct inode *, struct file *);
+					int (*release) (struct inode *, struct file *);
+				};
+				struct file_operations fops = {
+				  .open = led_open,
+				  .read = led_read,
+				  .write = led_write,
+				  .release = led_close,
+				};
+				fops.open = led_open;
+----------------------------------
+				  |
+硬件层 			led灯
+
+	1. 注册字符设备驱动 : register_chrdev
+	int register_chrdev(unsigned int major, const char *name,
+				  const struct file_operations *fops)
+
+	函数功能：注册字符设备驱动 
+	函数参数：
+		major：
+			major = 0 ：主设备号有系统自动分配
+			major > 0 ：major就是这设备号
+			
+			查看设备号：cat /proc/devices
+		
+		name ： 设备名字  
+			查看设备的名字： cat /proc/devices
+
+		fops：指向操作方法结构体类型的变量
+		struct file_operations {
+			// 函数指针类型变量   指向函数
+			ssize_t (*read) (struct file *, char __user *, size_t, loff_t *);
+			ssize_t (*write) (struct file *, const char __user *, size_t, loff_t *);
+			int (*open) (struct inode *, struct file *);
+			int (*release) (struct inode *, struct file *);
+		};
+	
+	函数的返回值：
+		major > 0 : 成功返回0，失败返回错误码 
+		major = 0 : 成功返回主设备号，失败返回错误码
+
+		
+		#define	EPERM		 1	/* Operation not permitted */
+		#define	ENOENT		 2	/* No such file or directory */
+		#define	ESRCH		 3	/* No such process */
+		#define	EINTR		 4	/* Interrupted system call */
+		#define	EIO		 5	/* I/O error */
+		#define	ENXIO		 6	/* No such device or address */
+		#define	E2BIG		 7	/* Argument list too long */
+		#define	ENOEXEC		 8	/* Exec format error */
+		#define	EBADF		 9	/* Bad file number */
+		#define	ECHILD		10	/* No child processes */
+		#define	EAGAIN		11	/* Try again */
+		#define	ENOMEM		12	/* Out of memory */
+		#define	EACCES		13	/* Permission denied */
+		#define	EFAULT		14	/* Bad address */
+		#define	ENOTBLK		15	/* Block device required */
+		#define	EBUSY		16	/* Device or resource busy */
+
+	2. 注销字符设备驱动 ： unregister_chrdev
+		void unregister_chrdev(unsigned int major, const char *name)
+		函数功能：注销字符设备驱动 
+		函数参数： 
+			major ： 主设备号 
+			name：设备名称 
+		返回值：
+			无
+
+	练习： 02led_driver
+		1. 编写代码完成字符设备的注册
+		
+		2. 加载led灯驱动到内核
+			sudo insmod  led_driver.ko 
+			cat /proc/devices   查看注册字符设备驱动是否成功。
+			
+		2. 卸载led灯驱动 
+			sudo rmmod led_driver
+	
+【5】应用层代码 
+	文件I/O : open  read  write  close
+	
+1. open函数
+	#include <sys/types.h>
+    #include <sys/stat.h>
+    #include <fcntl.h>
+
+    int open(const char *pathname, int flags);
+
+	函数功能： 打开一个文本文件 
+	函数参数： 
+		pathname : 文件路径名 
+		flags ： 
+			O_RDONLY ： 只读方式打开 
+			O_WRONLY ： 只写方式打开
+			O_RDWR   ： 读写方式打开
+	返回值： 
+		成功：返回新的文件描述符 
+		失败：返回-1,并且errno被设置
+		
+2. read函数	
+	#include <unistd.h>
+
+    ssize_t read(int fd, void *buf, size_t count);
+
+	函数功能： 从文件中读数据
+	函数参数： 
+		fd: 文件描述符
+		buf: 读到buf缓冲区中 
+		count: 读取字节的个数
+	返回值： 
+		成功：返回读取字节的个数
+		失败：返回-1， errno被设置
+	
+3. write函数
+	#include <unistd.h>
+
+    ssize_t write(int fd, const void *buf, size_t count);
+
+	函数功能： 写数据到文件中
+	函数参数：
+		fd: 文件描述符 
+		buf：将buf缓冲区的数据写到文件中
+		count：写字节的个数
+	返回值：
+		成功：返回写入字节的个数
+		失败：返回-1， errno被设置
+	
+	
+4. close函数 
+	#include <unistd.h>
+
+    int close(int fd);
+	
+	函数功能：关闭文件 
+	函数参数：
+		fd：文件描述符 
+	返回值： 
+		成功：返回0 
+		失败：返回-1， errno被设置
+	
+	1> 在02led_driver文件夹中编写led灯应用层的代码
+		vi led_app.c
+	2> 修改makefile文件，添加对应用层代码编译的命令
+		vi Makefile 
+		all:
+		    @ # 模块化编译驱动代码
+		    make -C $(KERNEL_DIR) M=$(CURRENT_DIR) modules 
+		    gcc led_app.c -o led_app    # 添加的内容
+	
+	3> 测试驱动程序，让应用程序掉用驱动程序
+		1） 加载led灯的驱动到内核中 
+		sudo insmod led_driver.ko 
+		
+		lsmod 
+		cat /proc/devices
+		
+		2） 在/dev目录下创建led灯的设备节点
+		sudo mknod /dev/myled  c  主设备号  次设备号
+		sudo mknod /dev/myled c 246 0
+		ls /dev/myled
+		3） 运行led灯的应用程序
+			sudo ./led_app 
+		4） 查看内核的打印信息 
+			dmesg 
+		5） 卸载led灯的驱动程序
+			sudo rmmod led_driver
+	
+	作业： 
+		1. 编写led灯驱动的代码
+		2. led灯驱动对应的应用层的代码
+	
+	
+	
+	
+	
+	
+

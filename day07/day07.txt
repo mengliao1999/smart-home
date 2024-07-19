@@ -1,0 +1,214 @@
+【1】strncpy函数
+    #include <string.h>
+    char *strncpy(char *dest, const char *src, size_t n);
+	/*****************
+	函数功能：实现字符串拷贝的函数
+	函数的参数： 
+		dest：目标字符串的首地址
+		src: 源字符串的首地址
+		n: 拷贝字符串前n个字符
+	函数返回值： 
+		成功返回dest字符串的首地址
+		失败返回NULL
+	*******************/
+
+【2】strcpy函数
+	#include <string.h>
+    char *strcpy(char *dest, const char *src);
+	/*****************
+	函数功能：实现字符串拷贝的函数
+	函数的参数： 
+		dest：目标字符串的首地址
+		src: 源字符串的首地址
+	函数返回值： 
+		成功返回dest字符串的首地址
+		失败返回NULL
+	*******************/
+【3】strncmp函数 
+
+    #include <string.h>
+    int strncmp(const char *s1, const char *s2, size_t n);
+	/*****************
+	函数功能：实现两个字符串的比较
+	函数的参数： 
+		s1：第一个字符串的首地址
+		s2: 第二个字符串的首地址
+		n: 比较字符串的的前n个字符
+	函数返回值： 
+		s1 == s2 : 返回0
+		s1 > s2  : 返回大于0的数
+		s1 < s2  : 返回小于0的数
+	*******************/
+
+【4】strcmp函数
+	#include <string.h>
+    int strcmp(const char *s1, const char *s2);
+	/*****************
+	函数功能：实现两个字符串的比较
+	函数的参数： 
+		s1：第一个字符串的首地址
+		s2: 第二个字符串的首地址
+	函数返回值： 
+		s1 == s2 : 返回0
+		s1 > s2  : 返回大于0的数
+		s1 < s2  : 返回小于0的数
+	*******************/
+【5】memset函数
+	#include <string.h>
+    void *memset(void *s, int c, size_t n);
+	/*****************
+	函数功能：设置内存中的值
+	函数的参数： 
+		s：内存的首地址
+		c: 要设置的值
+		n: 设置内存的空间的大小
+	函数返回值： 
+		成功返回设置的内存的首地址
+		失败返回NULL
+	*******************/
+
+##################################
+		网络相关的基础知识
+##################################
+
+【1】网络编程是基于客户端和服务器端  client/server  c/s 
+
+【2】基于TCP/IP的网络通信协议编写客户端和服务器端
+	TCP服务器端：华清远见智能家居系统的APP
+	TCP客户端：需要我们自己编写
+【3】网络地址和端口号
+	网络地址(IP地址)：
+	IPV4:0-255.0-255.0-255.0-255
+	
+	端口号：0-65535
+	8888
+【4】TCP客户端代码的编写流程
+1. socket函数：创建网络套接字
+	#include <sys/types.h>          /* See NOTES */
+    #include <sys/socket.h>
+
+    int socket(int domain, int type, int protocol);
+	功能：创建socket套接字
+	参数： 
+		domin：
+			AF_INET：使用IPV4的协议簇
+			AF_INET6：使用IPV6的协议簇
+		type：
+			SOCK_STREAM：TCP协议格式
+			SOCK_DGRAM：UDP协议格式
+		protocol：
+			0： 指定协议类型
+
+	返回值：
+		成功：返回一个新的文件描述符
+		失败：返回-1，errno被设置
+
+2. connect函数：连接服务器的函数
+	前提：服务器必须启动
+	#include <sys/types.h>          /* See NOTES */
+    #include <sys/socket.h>
+
+    int connect(int sockfd, const struct sockaddr *addr,
+                socklen_t addrlen);
+	
+	功能：连接服务器 
+	参数： 
+		sockfd：socket函数的返回值
+		addr：服务器的地址空间
+		addrlen：地址的长度
+	返回值： 
+		成功：返回0
+		失败：返回-1，errno被设置
+
+	socklen_t  <==> unsigned int 
+
+	struct sockaddr_in {                                                           
+		sin_family; 指定协议簇
+		sin_port;   端口号
+		sin_addr;   指定IP地址
+	};
+
+	typedef uint32_t in_addr_t; 
+	struct in_addr
+	{
+		in_addr_t s_addr;
+	};  
+	
+	1> inet_addr函数 ： 进行IP地址的转换
+		#include <sys/socket.h>
+		#include <netinet/in.h>
+		#include <arpa/inet.h>
+		in_addr_t inet_addr(const char *cp);
+		功能：将字符串类型的IP地址转换为in_addr_t类型IP地址
+		参数：
+			cp ： 字符串类型的IP地址
+		返回值：
+			返回in_addr_t类型的IP地址
+	2> atoi函数：将字符串转换为整数
+		#include <stdlib.h>
+		int atoi(const char *nptr);
+		功能：将字符串转为位整数 
+		参数：	
+			nptr：要转换的字符串
+		返回：
+			转换的结果
+	3> htons函数：将主机字节序转换为网络字节序
+		PC：小端对齐
+		网络:大端对齐
+		#include <arpa/inet.h>
+        uint16_t htons(uint16_t hostshort);
+		功能： 
+			将主机字节序转换为网络字节序
+		参数： 
+			hostshort：要转换的内容
+		返回值： 
+			主机字节序转换为网络字节序的结果
+	
+3. send函数： 发送数据的函数
+	#include <sys/types.h>
+    #include <sys/socket.h>
+
+    ssize_t send(int sockfd, const void *buf, size_t len, int flags);
+	
+	功能：发送数据的函数 
+	参数：
+		sockfd：socket函数的返回值
+		buf：要发送数据的首地址
+		len：发送数据的长度
+		flags：默认给0
+	返回值： 
+		成功：返回发送字节的个数
+		失败：返回-1， errno被设置
+4. recv函数：接收数据的函数
+	#include <sys/types.h>
+    #include <sys/socket.h>
+
+    ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+	功能： 接收数据的函数
+	参数： 
+		sockfd：socket函数返回值
+		buf：接收的数据放到哪个缓冲区的首地址
+		len：接收数据的长度
+		flags：默认为0
+	返回值： 
+		成功：返回接收字节的个数
+		失败：返回-1， errno被设置	
+		
+5. close 函数： 关闭网络套接字		
+	#include <unistd.h>
+	int close(int fd);
+	功能：关闭网络套接字
+	参数：
+		fd：要关闭的网络文件描述符，及socket函数的返回值
+	返回值：
+		成功：返回0
+		失败：返回-1， errno被设置
+		
+		
+		
+		
+		
+		
+		
+		
+
